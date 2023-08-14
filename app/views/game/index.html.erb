@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>あいつをジャストパリィするゲーム</title>
+  <style>
+    #game-container {
+      position: relative;
+      width: 800px;
+      height: 400px;
+      border: 1px solid #000;
+    }
+    #player {
+      position: absolute;
+      bottom: 0;
+      right: 50px;
+      width: 100px;
+      height: 100px;
+      background-color: blue;
+    }
+    #edmond_honda {
+      position: absolute;
+      bottom: 0;
+      left: 50px;
+      width: 100px;
+      height: 100px;
+      background-color: red;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="player"></div>
+    <div id="edmond_honda"></div>
+  </div>
+  <button id="start-button" onclick="startGame()">ゲームスタート</button>
+  <button id="parry-button" onclick="parry()">パリィ</button>
+  <div id="share-button"></div>
+  <script>
+    let successCount = 0;
+    let failureCount = 0;
+    let isParryAttempt = false;
+    const edmond = document.getElementById('edmond_honda');
+
+    function startGame() {
+      document.getElementById('start-button').disabled = true;
+      successCount = 0;
+      failureCount = 0;
+      setTimeout(startAttack, 2000);
+    }
+
+    function startAttack() {
+      edmond.style.left = '50px';
+      edmond.style.bottom = '0';
+      const attackType = Math.random() < 0.5 ? 'headbutt' : 'drop';
+      if (attackType === 'headbutt') {
+        setTimeout(headbutt, 2000);
+      } else {
+        setTimeout(drop, 2000);
+      }
+    }
+
+    function headbutt() {
+      let position = 50;
+      const interval = setInterval(() => {
+        position += 15; // 5割増しの速度で移動
+        edmond.style.left = `${position}px`;
+        if (position >= 700) {
+          clearInterval(interval);
+          startAttack();
+        }
+      }, 1000 / 60);
+    }
+
+    function drop() {
+      let positionX = 50;
+      let positionY = 0;
+      const player = document.getElementById('player').getBoundingClientRect();
+      const interval = setInterval(() => {
+        positionX += (player.right - positionX) / 10; // 飛距離を伸ばす
+        positionY += 25; // 飛距離を伸ばす
+        edmond.style.left = `${positionX}px`;
+        edmond.style.bottom = `${positionY}px`;
+        if (positionY >= 300) {
+          clearInterval(interval);
+          // 10フレームの遅延
+          setTimeout(dropDown, 1000 / 60 * 10);
+        }
+      }, 1000 / 60);
+    }
+
+    function dropDown() {
+      let position = 300;
+      const interval = setInterval(() => {
+        position -= 30;
+        edmond.style.bottom = `${position}px`;
+        if (position <= 0) {
+          clearInterval(interval);
+          startAttack();
+        }
+      }, 1000 / 60);
+    }
+
+    function parry() {
+      if (isParryAttempt) return;
+
+      isParryAttempt = true;
+
+      setTimeout(() => {
+        const playerRect = document.getElementById('player').getBoundingClientRect();
+        const edmondRect = edmond.getBoundingClientRect();
+
+        if (
+          playerRect.left < edmondRect.right &&
+          playerRect.right > edmondRect.left &&
+          playerRect.top < edmondRect.bottom &&
+          playerRect.bottom > edmondRect.top
+        ) {
+          successCount++;
+          alert('ジャストパリィ成功！');
+        } else {
+          failureCount++;
+          alert('ジャストパリィ失敗。');
+        }
+        isParryAttempt = false;
+        if (successCount + failureCount >= 5) {
+          const result = `ゲーム終了！ 成功回数：${successCount}, 失敗回数：${failureCount}`;
+          alert(result);
+          document.getElementById('start-button').disabled = false;
+          const twitterLink = `https://twitter.com/intent/tweet?text=${encodeURIComponent(result)}&url=${encodeURIComponent(document.location.href)}`;
+          const shareButton = `<a href="${twitterLink}" target="_blank">結果をツイッターで共有</a>`;
+          document.getElementById('share-button').innerHTML = shareButton;
+        }
+      }, 1000 / 30);
+    }
+  </script>
+</body>
+</html>
