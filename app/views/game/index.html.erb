@@ -41,16 +41,19 @@
     let successCount = 0;
     let failureCount = 0;
     let isParryAttempt = false;
+    let isGameStarted = false;
     const edmond = document.getElementById('edmond_honda');
 
     function startGame() {
       document.getElementById('start-button').disabled = true;
       successCount = 0;
       failureCount = 0;
+      isGameStarted = true;
       setTimeout(startAttack, 2000);
     }
 
     function startAttack() {
+      isParryAttempt = false;
       edmond.style.left = '50px';
       edmond.style.bottom = '0';
       const attackType = Math.random() < 0.5 ? 'headbutt' : 'drop';
@@ -103,11 +106,13 @@
     }
 
     function parry() {
-      if (isParryAttempt) return;
+      if (!isGameStarted || isParryAttempt) return;
 
       isParryAttempt = true;
 
-      setTimeout(() => {
+      let parryAttemptFrames = 2; // 2フレームの猶予
+
+      const interval = setInterval(() => {
         const playerRect = document.getElementById('player').getBoundingClientRect();
         const edmondRect = edmond.getBoundingClientRect();
 
@@ -119,20 +124,25 @@
         ) {
           successCount++;
           alert('ジャストパリィ成功！');
-        } else {
+          clearInterval(interval);
+        } else if (parryAttemptFrames <= 0) {
           failureCount++;
           alert('ジャストパリィ失敗。');
+          clearInterval(interval);
         }
-        isParryAttempt = false;
+
         if (successCount + failureCount >= 5) {
           const result = `ゲーム終了！ 成功回数：${successCount}, 失敗回数：${failureCount}`;
           alert(result);
           document.getElementById('start-button').disabled = false;
+          isGameStarted = false;
           const twitterLink = `https://twitter.com/intent/tweet?text=${encodeURIComponent(result)}&url=${encodeURIComponent(document.location.href)}`;
           const shareButton = `<a href="${twitterLink}" target="_blank">結果をツイッターで共有</a>`;
           document.getElementById('share-button').innerHTML = shareButton;
         }
-      }, 1000 / 30);
+
+        parryAttemptFrames--;
+      }, 1000 / 60); // 60FPSで更新
     }
   </script>
 </body>
